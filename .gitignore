@@ -1,0 +1,20 @@
+node_modules
+.env
+
+Day-7/node_modules
+
+# Hardhat files
+Day-7/cache
+Day-7/artifacts
+
+# TypeChain files
+Day-7/typechain
+Day-7/typechain-types
+
+# solidity-coverage files
+Day-7/coverage
+Day-7/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+Day-7/ignition/deployments/chain-31337
+Day-7/ignition/deployments/chain-11155111
