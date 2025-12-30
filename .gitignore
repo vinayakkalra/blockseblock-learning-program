@@ -18,3 +18,21 @@ Day-7/coverage.json
 # Hardhat Ignition default folder for deployments against a local node
 Day-7/ignition/deployments/chain-31337
 Day-7/ignition/deployments/chain-11155111
+
+Day-8/node_modules
+
+# Hardhat files
+Day-8/cache
+Day-8/artifacts
+
+# TypeChain files
+Day-8/typechain
+Day-8/typechain-types
+
+# solidity-coverage files
+Day-8/coverage
+Day-8/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+Day-8/ignition/deployments/chain-31337
+Day-8/ignition/deployments/chain-11155111
