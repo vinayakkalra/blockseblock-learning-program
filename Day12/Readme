@@ -1,0 +1,23 @@
+1️⃣ UUPS Proxy (Real World Way)
+🔹 How UUPS works (quick vibe check)
+
+Logic contract controls upgrades
+
+Proxy is super lightweight
+
+Cheaper gas than Transparent
+
+Upgrade logic lives inside implementation
+
+
+
+
+🧠 How you deploy (important)
+
+Deploy UUPSLogicV1
+
+Encode initialize(uint256)
+
+Deploy UUPSProxy(logicAddress, encodedData)
+
+Interact via proxy address
