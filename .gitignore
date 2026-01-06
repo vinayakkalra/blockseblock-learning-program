@@ -36,3 +36,9 @@ Day-8/coverage.json
 # Hardhat Ignition default folder for deployments against a local node
 Day-8/ignition/deployments/chain-31337
 Day-8/ignition/deployments/chain-11155111
+
+Day14/artifacts
+Day14/cache
+
+Day16 (dapp architecture)/artifacts
+Day16 (dapp architecture)/cache
