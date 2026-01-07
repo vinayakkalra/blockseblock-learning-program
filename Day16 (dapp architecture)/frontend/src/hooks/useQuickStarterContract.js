@@ -1,99 +1,99 @@
-import { useMemo } from "react";
 import { ethers } from "ethers";
+import QuickStarterABI from "../../../artifacts/contracts/QuickStarter.sol/QuickStarter.json";
 import toast from "react-hot-toast";
-import { CONTRACT_ABI, CONTRACT_CONFIG } from "../constants/contract";
+
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 export const useQuickStarterContract = (provider, signer) => {
-  const readContract = useMemo(() => {
-    if (!provider) return null;
-    return new ethers.Contract(
-      CONTRACT_CONFIG.address,
-      CONTRACT_ABI,
-      provider
-    );
-  }, [provider]);
+  const readContract =
+    provider &&
+    new ethers.Contract(CONTRACT_ADDRESS, QuickStarterABI.abi, provider);
 
-  const writeContract = useMemo(() => {
-    if (!signer) return null;
-    return new ethers.Contract(
-      CONTRACT_CONFIG.address,
-      CONTRACT_ABI,
-      signer
-    );
-  }, [signer]);
+  // WRITE (THIS WAS BROKEN BEFORE)
+  const writeContract =
+    signer &&
+    new ethers.Contract(CONTRACT_ADDRESS, QuickStarterABI.abi, signer);
 
-  // ✅ CREATE PROJECT
-  const createProject = async (name, goalEth) => {
-    if (!writeContract) {
-      toast.error("Connect wallet first");
-      return;
-    }
+  // ❗ SAFETY CHECK
+  if (signer && !writeContract) {
+    throw new Error("Signer exists but write contract not initialized");
+  }
 
+  // ---------------- CREATE PROJECT ----------------
+  const createProject = async (name, goalEth, initialEth) => {
     try {
-      const tx = await writeContract.createProject(
-        name,
-        ethers.parseEther(goalEth.toString())
-      );
       toast.loading("Creating project...", { id: "create" });
-      await tx.wait();
+       const tx = await writeContract.createProject(
+      name,
+      ethers.parseEther(goalEth),
+      {
+        value: ethers.parseEther(initialEth),
+      }
+    );
+
+    toast.success("Project created!", { id: "create" });
+    return await tx.wait();
+    } catch (error) {
+      console.log("Error : ",error);
       toast.success("Project created!", { id: "create" });
-    } catch (err) {
-      toast.error(err.reason || "Transaction failed");
+    }
+    if (!writeContract) {
+      throw new Error("Wallet not connected (no signer)");
     }
   };
 
-  // ✅ GET ALL PROJECTS
+  // ---------------- INVEST ----------------
+  const invest = async (projectId, ethAmount) => {
+    if (!writeContract) throw new Error("Wallet not connected");
+
+    const tx = await writeContract.invest(projectId, {
+      value: ethers.parseEther(ethAmount),
+    });
+
+    return await tx.wait();
+  };
+
+  // ---------------- WITHDRAW ----------------
+  const withdraw = async (projectId) => {
+    if (!writeContract) throw new Error("Wallet not connected");
+
+    const tx = await writeContract.withdraw(projectId);
+    return await tx.wait();
+  };
+
+  // ---------------- LIST PROJECTS ----------------
   const getAllProjects = async () => {
     if (!readContract) return [];
 
-    const count = await readContract.projectCount();
     const projects = [];
+    let index = 0;
 
-    for (let i = 0; i < Number(count); i++) {
-      const p = await readContract.getProject(i);
-      projects.push({
-        id: i,
-        name: p.name,
-        owner: p.owner,
-        goal: ethers.formatEther(p.goalAmount),
-        raised: ethers.formatEther(p.totalAmountRaised),
-        isActive: p.isActive,
-      });
+    while (true) {
+      try {
+        const p = await readContract.projects(index);
+
+        projects.push({
+          id: index,
+          name: p.name,
+          owner: p.owner,
+          goal: ethers.formatEther(p.goalAmount),
+          raised: ethers.formatEther(p.totalAmountRaised),
+          isActive: p.isActive,
+        });
+
+        index++;
+      } catch {
+        break;
+      }
     }
 
     return projects;
   };
 
-  // ✅ INVEST
-  const invest = async (projectId, eth) => {
-    try {
-      const tx = await writeContract.invest(projectId, {
-        value: ethers.parseEther(eth.toString()),
-      });
-      toast.loading("Investing...", { id: "invest" });
-      await tx.wait();
-      toast.success("Investment successful", { id: "invest" });
-    } catch (err) {
-      toast.error(err.reason || "Investment failed");
-    }
-  };
-
-  // ✅ WITHDRAW
-  const withdraw = async (projectId) => {
-    try {
-      const tx = await writeContract.withdraw(projectId);
-      toast.loading("Withdrawing...", { id: "withdraw" });
-      await tx.wait();
-      toast.success("Withdrawn", { id: "withdraw" });
-    } catch (err) {
-      toast.error(err.reason || "Withdraw failed");
-    }
-  };
-
   return {
     createProject,
-    getAllProjects,
     invest,
     withdraw,
+    getAllProjects,
   };
 };

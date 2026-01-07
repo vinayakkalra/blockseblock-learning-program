@@ -15,20 +15,26 @@ const ProjectCard = ({ project, onUpdate }) => {
     account && project.owner.toLowerCase() === account.toLowerCase();
 
   const handleWithdraw = async () => {
-    setLoading(true);
-    await withdraw(project.id);
-    setLoading(false);
-    onUpdate();
+    try {
+      setLoading(true);
+      await withdraw(project.id);
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert("Withdraw failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <div className="card">
         <h3 className="font-semibold">{project.name}</h3>
-        <p className="text-sm">Goal: {project.goal} ETH</p>
-        <p className="text-sm">Raised: {project.raised} ETH</p>
+        <p>Goal: {project.goal} ETH</p>
+        <p>Raised: {project.raised} ETH</p>
 
-        {project.isActive && !isOwner && (
+        {!isOwner && project.isActive && (
           <button
             className="btn-primary w-full mt-3"
             onClick={() => setShowInvest(true)}
@@ -44,7 +50,7 @@ const ProjectCard = ({ project, onUpdate }) => {
             disabled={loading}
             className="btn-secondary w-full mt-3"
           >
-            {loading ? "Withdrawing..." : "Withdraw"}
+            {loading ? "Withdrawing..." : "Withdraw Funds"}
           </button>
         )}
       </div>
@@ -53,7 +59,10 @@ const ProjectCard = ({ project, onUpdate }) => {
         <InvestModal
           project={project}
           onClose={() => setShowInvest(false)}
-          onSuccess={onUpdate}
+          onSuccess={() => {
+            setShowInvest(false);
+            onUpdate();
+          }}
         />
       )}
     </>

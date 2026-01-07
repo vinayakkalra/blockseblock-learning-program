@@ -1,18 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.20;
 
 contract QuickStarter {
-
-    address public owner;
     uint256 public projectCount;
 
-    // mapping to store projects
-    mapping(uint256 => Project) public projects;
-
-    // mapping to store project investments
-    mapping(uint256 => mapping(address => uint256)) public investments;
-
-    // Project structure
     struct Project {
         string name;
         address owner;
@@ -21,68 +12,85 @@ contract QuickStarter {
         bool isActive;
     }
 
-    event ProjectCreated(uint256 projectId, string name, address owner, uint256 goalAmount);
+    mapping(uint256 => Project) public projects;
+    mapping(uint256 => mapping(address => uint256)) public investments;
 
-    event InvestmentMade(uint256 projectId, address investor, uint256 amount);
+    event ProjectCreated(
+        uint256 indexed projectId,
+        address indexed owner,
+        uint256 initialAmount
+    );
 
-    event Withdrawal(uint256 projectId, address owner, uint256 amount);
+    event Invested(
+        uint256 indexed projectId,
+        address indexed investor,
+        uint256 amount
+    );
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not contract owner");
-        _;
-    }
+    event Withdrawn(
+        uint256 indexed projectId,
+        address indexed owner,
+        uint256 amount
+    );
 
-    constructor() {
-        owner = msg.sender;
-        projectCount = 0;
-    }
+    // 🔥 CREATE PROJECT WITH ETH (ESCROW)
+    function createProject(
+        string calldata name,
+        uint256 goalAmount
+    ) external payable {
+        require(bytes(name).length > 0, "Name required");
+        require(goalAmount > 0, "Invalid goal");
+        require(msg.value > 0, "Initial ETH required");
 
-    function createProject(string calldata name, uint256 goalAmount) external {
-        require(goalAmount > 0, "Goal amount must be greater than zero");
         projects[projectCount] = Project({
             name: name,
             owner: msg.sender,
             goalAmount: goalAmount,
-            totalAmountRaised: 0,
+            totalAmountRaised: msg.value,
             isActive: true
         });
+
+        investments[projectCount][msg.sender] = msg.value;
+
+        emit ProjectCreated(projectCount, msg.sender, msg.value);
         projectCount++;
-
-        emit ProjectCreated(projectCount - 1, name, msg.sender, goalAmount);
     }
 
-    function invest(uint256 _projectId) external payable {
-        Project storage currentProject = projects[_projectId];
-        require(currentProject.isActive, "Project is not active");
-        require(msg.value > 0, "Investment amount must be greater than zero");
-        
-        currentProject.totalAmountRaised += msg.value;
+    // 🔥 INVEST
+    function invest(uint256 projectId) external payable {
+        Project storage project = projects[projectId];
 
-        investments[_projectId][msg.sender] += msg.value;
+        require(project.isActive, "Project inactive");
+        require(msg.value > 0, "ETH required");
 
-        emit InvestmentMade(_projectId, msg.sender, msg.value);
+        project.totalAmountRaised += msg.value;
+        investments[projectId][msg.sender] += msg.value;
 
+        emit Invested(projectId, msg.sender, msg.value);
     }
 
-    function withdraw (uint256 _projectId) external {
-        Project storage currentProject = projects[_projectId];
-        require(msg.sender == currentProject.owner, "Only project owner can withdraw");
-        // require(currentProject.totalAmountRaised >= currentProject.goalAmount, "Funding goal not reached");
-        require(currentProject.isActive, "Project is not active");
-        currentProject.isActive = false;
-        (bool success, ) = payable(currentProject.owner).call{value: currentProject.totalAmountRaised}("");
-        require(success, "Withdrawal failed");
+    // 🔥 WITHDRAW (OWNER ONLY)
+    function withdraw(uint256 projectId) external {
+        Project storage project = projects[projectId];
 
-        emit Withdrawal(_projectId, currentProject.owner, currentProject.totalAmountRaised);
+        require(msg.sender == project.owner, "Not owner");
+        require(project.totalAmountRaised > 0, "No funds");
 
+        uint256 amount = project.totalAmountRaised;
+        project.totalAmountRaised = 0;
+        project.isActive = false;
+
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "ETH transfer failed");
+
+        emit Withdrawn(projectId, msg.sender, amount);
     }
 
-    function getProject(uint256 _projectId) external view returns (Project memory) {
-        return projects[_projectId];
+    function getProject(uint256 projectId)
+        external
+        view
+        returns (Project memory)
+    {
+        return projects[projectId];
     }
-
-    function setProjectInactive(uint256 _projectId) external onlyOwner {
-        projects[_projectId].isActive = false;
-    }
-
 }
