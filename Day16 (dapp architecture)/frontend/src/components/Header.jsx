@@ -20,7 +20,7 @@ const Header = () => {
           
           <div className="flex items-center space-x-4">
             <div className="hidden sm:block text-sm text-gray-600">
-              Powered by Ethereum
+              Powered by BlockseBlock
             </div>
           </div>
         </div>
