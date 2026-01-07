@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
 export const useWallet = () => {
@@ -8,9 +8,14 @@ export const useWallet = () => {
   const [chainId, setChainId] = useState(null);
 
   const connectWallet = async () => {
-    if (!window.ethereum) return;
+    if (!window.ethereum) {
+      alert("MetaMask not found");
+      return;
+    }
 
     const browserProvider = new ethers.BrowserProvider(window.ethereum);
+    await browserProvider.send("eth_requestAccounts", []);
+
     const signer = await browserProvider.getSigner();
     const address = await signer.getAddress();
     const network = await browserProvider.getNetwork();
@@ -21,46 +26,40 @@ export const useWallet = () => {
     setChainId(Number(network.chainId));
   };
 
-  const isConnected = Boolean(account);
+  // handle account + network change safely
+  useEffect(() => {
+    if (!window.ethereum) return;
 
-  const isSupportedNetwork = () => chainId === 31337;
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0) {
+        setAccount(null);
+        setSigner(null);
+        setProvider(null);
+      } else {
+        connectWallet();
+      }
+    };
 
-  const switchToHardhat = async () => {
-  if (!window.ethereum) return;
+    const handleChainChanged = () => {
+      window.location.reload();
+    };
 
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x7A69" }],
-    });
-  } catch (err) {
-    if (err.code === 4902) {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [{
-          chainId: "0x7A69",
-          chainName: "Hardhat Localhost",
-          rpcUrls: ["http://127.0.0.1:8545"],
-          nativeCurrency: {
-            name: "Ethereum",
-            symbol: "ETH",
-            decimals: 18,
-          },
-        }],
-      });
-    }
-  }
-};
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
 
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      window.ethereum.removeListener("chainChanged", handleChainChanged);
+    };
+  }, []);
 
   return {
     account,
     provider,
     signer,
     chainId,
-    isConnected,
-    isSupportedNetwork,
-    switchToHardhat,
+    isConnected: Boolean(account),
+    isSupportedNetwork: () => chainId === 31337,
     connectWallet,
   };
 };
