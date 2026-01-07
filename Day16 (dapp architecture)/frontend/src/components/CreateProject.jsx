@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { useWallet } from "../context/WalletContext";
 import { useQuickStarterContract } from "../hooks/useQuickStarterContract";
+import toast from "react-hot-toast";
 
 const CreateProject = ({ onProjectCreated }) => {
   const [projectName, setProjectName] = useState("");
@@ -11,47 +12,44 @@ const CreateProject = ({ onProjectCreated }) => {
 
   const { provider, signer, isConnected, isSupportedNetwork } = useWallet();
   const { createProject } = useQuickStarterContract(provider, signer);
-  console.log("signer", console.log(signer));
-  console.log(signer?.getAddress())
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!isConnected || !isSupportedNetwork()) {
-      alert("Wallet not connected or wrong network");
-      return;
-    }
+  if (!isConnected || !isSupportedNetwork()) {
+    toast.error("Connect wallet on Sepolia");
+    return;
+  }
 
-    if (!projectName || !goalAmount || !initialAmount) {
-      alert("Fill all fields");
-      return;
-    }
+  try {
+    setIsCreating(true);
 
-    try {
-      setIsCreating(true);
+    const loadingToast = toast.loading("Creating project…");
 
-      console.log("Creating project...");
-      console.log({ projectName, goalAmount, initialAmount });
+    const { receipt } = await createProject(
+      projectName.trim(),
+      goalAmount,
+      initialAmount
+    );
 
-      const receipt = await createProject(
-        projectName.trim(),
-        goalAmount.toString(),
-        initialAmount.toString()
-      );
+    toast.dismiss(loadingToast);
+    toast.success("🎉 Project created successfully!");
 
-      console.log("TX SUCCESS", receipt);
+    console.log("TX RECEIPT:", receipt);
 
-      setProjectName("");
-      setGoalAmount("");
-      setInitialAmount("");
-      onProjectCreated?.();
-    } catch (err) {
-      console.error("CREATE FAILED:", err);
-      alert(err.message || "Transaction failed");
-    } finally {
-      setIsCreating(false);
-    }
-  };
+    setProjectName("");
+    setGoalAmount("");
+    setInitialAmount("");
+
+    onProjectCreated(); // 🔥 TRIGGER REFRESH
+  } catch (err) {
+    console.error(err);
+    toast.error(err.reason || err.message || "Transaction failed");
+  } finally {
+    setIsCreating(false);
+  }
+};
 
 
   const isFormValid =

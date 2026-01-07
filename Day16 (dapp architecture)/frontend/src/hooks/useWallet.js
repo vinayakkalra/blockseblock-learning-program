@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
+const SEPOLIA_CHAIN_ID = 11155111;
+
 export const useWallet = () => {
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -8,10 +10,7 @@ export const useWallet = () => {
   const [chainId, setChainId] = useState(null);
 
   const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert("MetaMask not found");
-      return;
-    }
+    if (!window.ethereum) return alert("Install MetaMask");
 
     const browserProvider = new ethers.BrowserProvider(window.ethereum);
     await browserProvider.send("eth_requestAccounts", []);
@@ -26,30 +25,21 @@ export const useWallet = () => {
     setChainId(Number(network.chainId));
   };
 
-  // handle account + network change safely
+  const switchToSepolia = async () => {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0xaa36a7" }],
+    });
+  };
+
   useEffect(() => {
     if (!window.ethereum) return;
 
-    const handleAccountsChanged = (accounts) => {
-      if (accounts.length === 0) {
-        setAccount(null);
-        setSigner(null);
-        setProvider(null);
-      } else {
-        connectWallet();
-      }
-    };
-
-    const handleChainChanged = () => {
-      window.location.reload();
-    };
-
-    window.ethereum.on("accountsChanged", handleAccountsChanged);
-    window.ethereum.on("chainChanged", handleChainChanged);
+    window.ethereum.on("accountsChanged", connectWallet);
+    window.ethereum.on("chainChanged", () => window.location.reload());
 
     return () => {
-      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
-      window.ethereum.removeListener("chainChanged", handleChainChanged);
+      window.ethereum.removeAllListeners();
     };
   }, []);
 
@@ -58,8 +48,9 @@ export const useWallet = () => {
     provider,
     signer,
     chainId,
-    isConnected: Boolean(account),
-    isSupportedNetwork: () => chainId === 31337,
+    isConnected: !!account,
+    isSupportedNetwork: () => chainId === SEPOLIA_CHAIN_ID,
     connectWallet,
+    switchToSepolia,
   };
 };

@@ -1,59 +1,62 @@
 import { ethers } from "ethers";
-import QuickStarterABI from "../../../artifacts/contracts/QuickStarter.sol/QuickStarter.json";
-
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from "../constants/contract";
 
 export const useQuickStarterContract = (provider, signer) => {
-  const readContract =
-    provider &&
-    new ethers.Contract(CONTRACT_ADDRESS, QuickStarterABI.abi, provider);
+  if (!CONTRACT_ADDRESS) return {};
 
-  const writeContract =
-    signer &&
-    new ethers.Contract(CONTRACT_ADDRESS, QuickStarterABI.abi, signer);
+  const read =
+    provider && new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-  // ---------------- CREATE PROJECT ----------------
+  const write =
+    signer && new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+  // 🔥 CREATE PROJECT
   const createProject = async (name, goalEth, initialEth) => {
-    if (!writeContract) throw new Error("Wallet not connected");
+    if (!write) throw new Error("Wallet not connected");
 
-    const tx = await writeContract.createProject(
+    const tx = await write.createProject(
       name,
       ethers.parseEther(goalEth),
       { value: ethers.parseEther(initialEth) }
     );
 
-    return await tx.wait();
+    const receipt = await tx.wait(); // ⬅️ wait till mined
+    return { tx, receipt };
   };
 
-  // ---------------- LIST PROJECTS ----------------
+  // 🔥 GET PROJECTS
   const getAllProjects = async () => {
-    if (!readContract) return [];
+    if (!read) return [];
 
+    const count = await read.projectCount(); // ✅ IMPORTANT
     const projects = [];
-    let i = 0;
 
-    while (true) {
-      try {
-        const p = await readContract.projects(i);
-        projects.push({
-          id: i,
-          name: p.name,
-          owner: p.owner,
-          goal: ethers.formatEther(p.goalAmount),
-          raised: ethers.formatEther(p.totalAmountRaised),
-          isActive: p.isActive,
-        });
-        i++;
-      } catch {
-        break;
-      }
+    for (let i = 0; i < Number(count); i++) {
+      const p = await read.projects(i);
+      projects.push({
+        id: i,
+        name: p.name,
+        owner: p.owner,
+        goal: ethers.formatEther(p.goalAmount),
+        raised: ethers.formatEther(p.totalAmountRaised),
+        isActive: p.isActive,
+      });
     }
 
     return projects;
   };
 
-  return {
-    createProject,
-    getAllProjects,
+  const invest = async (id, eth) => {
+    const tx = await write.invest(id, {
+      value: ethers.parseEther(eth),
+    });
+    return tx.wait();
   };
+
+  const withdraw = async (id) => {
+    const tx = await write.withdraw(id);
+    return tx.wait();
+  };
+
+  return { createProject, getAllProjects, invest, withdraw };
 };

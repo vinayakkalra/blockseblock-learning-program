@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useWallet } from "../context/WalletContext";
 import { useQuickStarterContract } from "../hooks/useQuickStarterContract";
+import toast from "react-hot-toast";
 
 const InvestModal = ({ project, onClose, onSuccess }) => {
   const [amount, setAmount] = useState("");
@@ -12,15 +13,15 @@ const InvestModal = ({ project, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isConnected || !isSupportedNetwork()) return;
-
     try {
       setLoading(true);
+      const t = toast.loading("Investing…");
       await invest(project.id, amount);
+      toast.dismiss(t);
+      toast.success("Investment successful 💰");
       onSuccess();
     } catch (err) {
-      console.error(err);
-      alert("Investment failed");
+      toast.error(err.reason || "Investment failed");
     } finally {
       setLoading(false);
     }

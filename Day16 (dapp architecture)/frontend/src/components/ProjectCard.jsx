@@ -3,6 +3,7 @@ import { Wallet } from "lucide-react";
 import { useWallet } from "../context/WalletContext";
 import { useQuickStarterContract } from "../hooks/useQuickStarterContract";
 import InvestModal from "./InvestModal";
+import toast from "react-hot-toast";
 
 const ProjectCard = ({ project, onUpdate }) => {
   const [showInvest, setShowInvest] = useState(false);
@@ -15,17 +16,19 @@ const ProjectCard = ({ project, onUpdate }) => {
     account && project.owner.toLowerCase() === account.toLowerCase();
 
   const handleWithdraw = async () => {
-    try {
-      setLoading(true);
-      await withdraw(project.id);
-      onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert("Withdraw failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const t = toast.loading("Withdrawing funds…");
+    await withdraw(project.id);
+    toast.dismiss(t);
+    toast.success("Funds withdrawn 🎯");
+    onUpdate();
+  } catch (err) {
+    toast.error(err.reason || "Withdraw failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>

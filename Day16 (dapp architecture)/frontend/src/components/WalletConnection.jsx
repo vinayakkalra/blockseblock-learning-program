@@ -1,14 +1,13 @@
 import { Wallet } from "lucide-react";
 import { useWallet } from "../context/WalletContext";
 
-
 const WalletConnection = () => {
   const {
     account,
     isConnected,
     isSupportedNetwork,
     connectWallet,
-    switchToHardhat
+    switchToSepolia,
   } = useWallet();
 
   if (!isConnected) {
@@ -27,13 +26,12 @@ const WalletConnection = () => {
       <p className="text-sm">Connected: {account}</p>
       {isConnected && !isSupportedNetwork() && (
         <button
-          onClick={switchToHardhat}
+          onClick={switchToSepolia}
           className="mt-2 text-sm text-red-600 underline"
         >
-          Switch to Hardhat Localhost (31337)
+          Switch to Sepolia
         </button>
       )}
-
     </div>
   );
 };
