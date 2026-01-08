@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
-
 import "./interfaces/IERC20.sol";
 import "./interfaces/IWrappedTokenGatewayV3.sol";
 
@@ -49,21 +48,32 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         keyHash = _keyHash;
     }
 
-    function depositETH() external payable nonReentrant {
+    event ErrorLog(string reason);
+
+    function deposit() external payable nonReentrant {
         require(msg.value > 0, "Deposit amount must be greater than zero");
         if (deposits[msg.sender] == 0) {
             players.push(msg.sender);
         }
         deposits[msg.sender] += msg.value;
-        wrappedTokenGateway.depositETH{value: msg.value}(
-            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
-            address(this),
-            0
-        );
-        emit Deposited(msg.sender, msg.value);
+        try
+            wrappedTokenGateway.depositETH{value: msg.value}(
+                address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
+                address(this),
+                0
+            )
+        {
+            emit Deposited(msg.sender, msg.value);
+        } catch Error(string memory reason) {
+            emit ErrorLog(reason);
+            revert(reason);
+        } catch {
+            emit ErrorLog("Unknown error");
+            revert("Unknown error");
+        }
     }
 
-    function withdrawETH(uint256 amount) external nonReentrant {
+    function withdraw(uint256 amount) external nonReentrant {
         require(deposits[msg.sender] >= amount, "Insufficient balance");
         deposits[msg.sender] -= amount;
 
@@ -101,27 +111,26 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
 
         lotteryActive = true;
         lastRequestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest(
-                {
-                    keyHash : keyHash,
-                    subId : subscriptionId,
-                    requestConfirmations : requestConfirmations,
-                    callbackGasLimit : callbackGasLimit,
-                    numWords : 1,
-                    extraArgs: VRFV2PlusClient._argsToBytes(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: keyHash,
+                subId: subscriptionId,
+                requestConfirmations: requestConfirmations,
+                callbackGasLimit: callbackGasLimit,
+                numWords: 1,
+                extraArgs: VRFV2PlusClient._argsToBytes(
                     // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                        VRFV2PlusClient.ExtraArgsV1({nativePayment: true})
-                    )
-                }
-        ));
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: true})
+                )
+            })
+        );
         emit RandomnessRequested(lastRequestId);
     }
 
     // Chainlink VRF callback
     function fulfillRandomWords(
-    uint256 requestId,
-    uint256[] calldata randomWords
-  ) internal override {
+        uint256 requestId,
+        uint256[] calldata randomWords
+    ) internal override {
         require(lotteryActive, "No lottery in progress");
         uint256 winnerIndex = randomWords[0] % players.length;
         address winner = players[winnerIndex];

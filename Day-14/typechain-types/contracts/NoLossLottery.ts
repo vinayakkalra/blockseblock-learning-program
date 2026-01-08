@@ -30,7 +30,7 @@ export interface NoLossLotteryInterface extends Interface {
       | "acceptOwnership"
       | "admin"
       | "callbackGasLimit"
-      | "depositETH"
+      | "deposit"
       | "deposits"
       | "emergencyWithdraw"
       | "getATokenBalance"
@@ -48,7 +48,7 @@ export interface NoLossLotteryInterface extends Interface {
       | "subscriptionId"
       | "transferOwnership"
       | "vrfCoordinator"
-      | "withdrawETH"
+      | "withdraw"
       | "yieldToDistribute"
   ): FunctionFragment;
 
@@ -56,6 +56,7 @@ export interface NoLossLotteryInterface extends Interface {
     nameOrSignatureOrTopic:
       | "CoordinatorSet"
       | "Deposited"
+      | "ErrorLog"
       | "LotteryWinner"
       | "OwnershipTransferRequested"
       | "OwnershipTransferred"
@@ -73,10 +74,7 @@ export interface NoLossLotteryInterface extends Interface {
     functionFragment: "callbackGasLimit",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "depositETH",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "deposit", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "deposits",
     values: [AddressLike]
@@ -140,7 +138,7 @@ export interface NoLossLotteryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawETH",
+    functionFragment: "withdraw",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -158,7 +156,7 @@ export interface NoLossLotteryInterface extends Interface {
     functionFragment: "callbackGasLimit",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "depositETH", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deposits", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "emergencyWithdraw",
@@ -212,10 +210,7 @@ export interface NoLossLotteryInterface extends Interface {
     functionFragment: "vrfCoordinator",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawETH",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "yieldToDistribute",
     data: BytesLike
@@ -240,6 +235,18 @@ export namespace DepositedEvent {
   export interface OutputObject {
     user: string;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace ErrorLogEvent {
+  export type InputTuple = [reason: string];
+  export type OutputTuple = [reason: string];
+  export interface OutputObject {
+    reason: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -362,7 +369,7 @@ export interface NoLossLottery extends BaseContract {
 
   callbackGasLimit: TypedContractMethod<[], [bigint], "view">;
 
-  depositETH: TypedContractMethod<[], [void], "payable">;
+  deposit: TypedContractMethod<[], [void], "payable">;
 
   deposits: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
@@ -410,11 +417,7 @@ export interface NoLossLottery extends BaseContract {
 
   vrfCoordinator: TypedContractMethod<[], [string], "view">;
 
-  withdrawETH: TypedContractMethod<
-    [amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  withdraw: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
   yieldToDistribute: TypedContractMethod<[], [bigint], "view">;
 
@@ -435,7 +438,7 @@ export interface NoLossLottery extends BaseContract {
     nameOrSignature: "callbackGasLimit"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "depositETH"
+    nameOrSignature: "deposit"
   ): TypedContractMethod<[], [void], "payable">;
   getFunction(
     nameOrSignature: "deposits"
@@ -493,7 +496,7 @@ export interface NoLossLottery extends BaseContract {
     nameOrSignature: "vrfCoordinator"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "withdrawETH"
+    nameOrSignature: "withdraw"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "yieldToDistribute"
@@ -512,6 +515,13 @@ export interface NoLossLottery extends BaseContract {
     DepositedEvent.InputTuple,
     DepositedEvent.OutputTuple,
     DepositedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ErrorLog"
+  ): TypedContractEvent<
+    ErrorLogEvent.InputTuple,
+    ErrorLogEvent.OutputTuple,
+    ErrorLogEvent.OutputObject
   >;
   getEvent(
     key: "LotteryWinner"
@@ -570,6 +580,17 @@ export interface NoLossLottery extends BaseContract {
       DepositedEvent.InputTuple,
       DepositedEvent.OutputTuple,
       DepositedEvent.OutputObject
+    >;
+
+    "ErrorLog(string)": TypedContractEvent<
+      ErrorLogEvent.InputTuple,
+      ErrorLogEvent.OutputTuple,
+      ErrorLogEvent.OutputObject
+    >;
+    ErrorLog: TypedContractEvent<
+      ErrorLogEvent.InputTuple,
+      ErrorLogEvent.OutputTuple,
+      ErrorLogEvent.OutputObject
     >;
 
     "LotteryWinner(address,uint256)": TypedContractEvent<
