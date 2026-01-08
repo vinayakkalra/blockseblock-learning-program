@@ -24,12 +24,16 @@ describe("NoLossLottery", function () {
       _subscriptionId,
       _keyHash
     );
-    // await noLossLottery.deployed();
+    await noLossLottery.waitForDeployment();
+    console.log("NoLossLottery deployed to:", await noLossLottery.getAddress());
+    console.log("Owner address:", await owner.getAddress());
+    console.log("User1 address:", await user1.getAddress());
+    console.log("User2 address:", await user2.getAddress());
   });
 
   describe("Deployment", function () {
     it("Should deploy with the correct Aave gateway address", async function () {
-      expect(await noLossLottery.wrappedTokenGateway()).to.equal(aaveGatewayAddress);
+      expect(await noLossLottery.getWrappedTokenGateway()).to.equal(aaveGatewayAddress);
     });
 
     it("Should deploy with the correct Aave token address", async function () {
@@ -37,20 +41,21 @@ describe("NoLossLottery", function () {
     });
 
     it("Should set the owner correctly", async function () {
-      expect(await noLossLottery.owner()).to.equal(owner.address);
+      expect(await noLossLottery.owner()).to.equal(await owner.getAddress());
     });
   });
 
   describe("Deposits", function () {
     it("Should allow users to deposit ETH and emit event", async function () {
-      const depositAmount = hre.ethers.parseEther("0.01");
+      const depositAmount = hre.ethers.parseEther("0.001");
+      const user1Address = await user1.getAddress();
       await expect(
         noLossLottery.connect(user1).depositETH({ value: depositAmount })
       )
         .to.emit(noLossLottery, "Deposited")
-        .withArgs(user1.address, depositAmount);
+        .withArgs(user1Address, depositAmount);
 
-      expect(await noLossLottery.deposits(user1.address)).to.equal(depositAmount);
+      expect(await noLossLottery.deposits(user1Address)).to.equal(depositAmount);
     });
 
     it("Should not allow zero deposit", async function () {
@@ -63,18 +68,19 @@ describe("NoLossLottery", function () {
   describe("Withdrawals", function () {
     it("Should allow users to withdraw their ETH", async function () {
       const depositAmount = hre.ethers.parseEther("0.001");
+      const user1Address = await user1.getAddress();
       await noLossLottery.connect(user1).depositETH({ value: depositAmount });
 
       // Simulate Aave withdrawal by funding contract with ETH (for test only)
-      await user1.sendTransaction({ to: noLossLottery.address, value: depositAmount });
+      // await user1.sendTransaction({ to: await noLossLottery.getAddress(), value: depositAmount });
 
       await expect(
         noLossLottery.connect(user1).withdrawETH(depositAmount)
       )
         .to.emit(noLossLottery, "Withdrawn")
-        .withArgs(user1.address, depositAmount);
+        .withArgs(user1Address, depositAmount);
 
-      expect(await noLossLottery.deposits(user1.address)).to.equal(0);
+      expect(await noLossLottery.deposits(user1Address)).to.equal(0);
     });
 
     it("Should not allow withdrawal of more than deposited", async function () {
@@ -87,8 +93,8 @@ describe("NoLossLottery", function () {
   describe("Lottery", function () {
     it("Should only allow owner to pick winner", async function () {
       await expect(
-        noLossLottery.connect(user1).pickWinner()
-      ).to.be.revertedWith("Not the contract owner");
+      noLossLottery.connect(user1).pickWinner()
+    ).to.be.revertedWith("Only callable by owner");
     });
 
     it("Should revert if no players", async function () {
@@ -109,7 +115,7 @@ describe("NoLossLottery", function () {
     it("Should allow only owner to emergency withdraw", async function () {
       await expect(
         noLossLottery.connect(user1).emergencyWithdraw()
-      ).to.be.revertedWith("Not the contract owner");
+      ).to.be.revertedWith("Only callable by owner");
     });
   });
 });

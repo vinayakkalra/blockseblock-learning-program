@@ -10,7 +10,7 @@ import "./interfaces/IERC20.sol";
 import "./interfaces/IWrappedTokenGatewayV3.sol";
 
 contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
-    IWrappedTokenGatewayV3 public immutable wrappedTokenGateway;
+    IWrappedTokenGatewayV3 immutable wrappedTokenGateway;
     IERC20 public immutable aToken;
 
     address public admin;
@@ -56,7 +56,7 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         }
         deposits[msg.sender] += msg.value;
         wrappedTokenGateway.depositETH{value: msg.value}(
-            address(wrappedTokenGateway.POOL()),
+            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
             address(this),
             0
         );
@@ -69,7 +69,7 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
 
         // Withdraw from Aave
         wrappedTokenGateway.withdrawETH(
-            address(wrappedTokenGateway.POOL()),
+            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
             amount,
             address(this)
         );
@@ -128,7 +128,7 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
 
         // Withdraw yield from Aave and send to winner
         wrappedTokenGateway.withdrawETH(
-            address(wrappedTokenGateway.POOL()),
+            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
             yieldToDistribute,
             address(this)
         );
@@ -146,10 +146,14 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         uint256 contractBalance = aToken.balanceOf(address(this));
         require(contractBalance > 0, "No funds to withdraw");
         wrappedTokenGateway.withdrawETH(
-            address(wrappedTokenGateway.POOL()),
+            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
             contractBalance,
             admin
         );
+    }
+
+    function getWrappedTokenGateway() external view returns (address) {
+        return address(wrappedTokenGateway);
     }
 
     // Allow contract to receive ETH from Aave withdrawals

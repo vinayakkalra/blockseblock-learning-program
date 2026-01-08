@@ -34,6 +34,7 @@ export interface NoLossLotteryInterface extends Interface {
       | "deposits"
       | "emergencyWithdraw"
       | "getATokenBalance"
+      | "getWrappedTokenGateway"
       | "keyHash"
       | "lastRequestId"
       | "lotteryActive"
@@ -48,7 +49,6 @@ export interface NoLossLotteryInterface extends Interface {
       | "transferOwnership"
       | "vrfCoordinator"
       | "withdrawETH"
-      | "wrappedTokenGateway"
       | "yieldToDistribute"
   ): FunctionFragment;
 
@@ -87,6 +87,10 @@ export interface NoLossLotteryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getATokenBalance",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getWrappedTokenGateway",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "keyHash", values?: undefined): string;
@@ -140,10 +144,6 @@ export interface NoLossLotteryInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "wrappedTokenGateway",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "yieldToDistribute",
     values?: undefined
   ): string;
@@ -166,6 +166,10 @@ export interface NoLossLotteryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getATokenBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getWrappedTokenGateway",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "keyHash", data: BytesLike): Result;
@@ -210,10 +214,6 @@ export interface NoLossLotteryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "withdrawETH",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "wrappedTokenGateway",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -370,6 +370,8 @@ export interface NoLossLottery extends BaseContract {
 
   getATokenBalance: TypedContractMethod<[], [bigint], "view">;
 
+  getWrappedTokenGateway: TypedContractMethod<[], [string], "view">;
+
   keyHash: TypedContractMethod<[], [string], "view">;
 
   lastRequestId: TypedContractMethod<[], [bigint], "view">;
@@ -414,8 +416,6 @@ export interface NoLossLottery extends BaseContract {
     "nonpayable"
   >;
 
-  wrappedTokenGateway: TypedContractMethod<[], [string], "view">;
-
   yieldToDistribute: TypedContractMethod<[], [bigint], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -446,6 +446,9 @@ export interface NoLossLottery extends BaseContract {
   getFunction(
     nameOrSignature: "getATokenBalance"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getWrappedTokenGateway"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "keyHash"
   ): TypedContractMethod<[], [string], "view">;
@@ -492,9 +495,6 @@ export interface NoLossLottery extends BaseContract {
   getFunction(
     nameOrSignature: "withdrawETH"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "wrappedTokenGateway"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "yieldToDistribute"
   ): TypedContractMethod<[], [bigint], "view">;

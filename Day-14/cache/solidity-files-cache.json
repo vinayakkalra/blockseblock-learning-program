@@ -39,8 +39,8 @@
       ]
     },
     "/Users/vinayak/Documents/projects/blockseblock-learning-program/Day-14/contracts/NoLossLottery.sol": {
-      "lastModificationDate": 1767819460518,
-      "contentHash": "9e39e6e7a880dc09940508f17a9746c9",
+      "lastModificationDate": 1767862265680,
+      "contentHash": "888730e2f00862b2c0afff86c80dc65f",
       "sourceName": "contracts/NoLossLottery.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -611,6 +611,43 @@
       ],
       "artifacts": [
         "IAToken"
+      ]
+    },
+    "/Users/vinayak/Documents/projects/blockseblock-learning-program/Day-14/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1767729130013,
+      "contentHash": "681c532e816169606d13a5fe8b475074",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
       ]
     }
   }
