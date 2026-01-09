@@ -4,5 +4,6 @@
 export type { IAToken } from "./IAToken";
 export type { IERC20 } from "./IERC20";
 export type { IPool } from "./IPool";
+export type { IPoolDataProvider } from "./IPoolDataProvider";
 export type { IWETH } from "./IWETH";
 export type { IWrappedTokenGatewayV3 } from "./IWrappedTokenGatewayV3";

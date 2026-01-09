@@ -34,13 +34,16 @@ export interface NoLossLotteryInterface extends Interface {
       | "deposits"
       | "emergencyWithdraw"
       | "getATokenBalance"
+      | "getScaledBalance"
       | "getWrappedTokenGateway"
+      | "getliquidityIndex"
       | "keyHash"
       | "lastRequestId"
       | "lotteryActive"
       | "owner"
       | "pickWinner"
       | "players"
+      | "protocolDataProvider"
       | "rawFulfillRandomWords"
       | "requestConfirmations"
       | "s_vrfCoordinator"
@@ -48,6 +51,7 @@ export interface NoLossLotteryInterface extends Interface {
       | "subscriptionId"
       | "transferOwnership"
       | "vrfCoordinator"
+      | "wethToken"
       | "withdraw"
       | "yieldToDistribute"
   ): FunctionFragment;
@@ -56,7 +60,7 @@ export interface NoLossLotteryInterface extends Interface {
     nameOrSignatureOrTopic:
       | "CoordinatorSet"
       | "Deposited"
-      | "ErrorLog"
+      | "GetValueNowAndTotalDeposits"
       | "LotteryWinner"
       | "OwnershipTransferRequested"
       | "OwnershipTransferred"
@@ -88,7 +92,15 @@ export interface NoLossLotteryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getScaledBalance",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getWrappedTokenGateway",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getliquidityIndex",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "keyHash", values?: undefined): string;
@@ -108,6 +120,10 @@ export interface NoLossLotteryInterface extends Interface {
   encodeFunctionData(
     functionFragment: "players",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "protocolDataProvider",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "rawFulfillRandomWords",
@@ -137,6 +153,7 @@ export interface NoLossLotteryInterface extends Interface {
     functionFragment: "vrfCoordinator",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "wethToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish]
@@ -167,7 +184,15 @@ export interface NoLossLotteryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getScaledBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getWrappedTokenGateway",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getliquidityIndex",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "keyHash", data: BytesLike): Result;
@@ -182,6 +207,10 @@ export interface NoLossLotteryInterface extends Interface {
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pickWinner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "players", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "protocolDataProvider",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "rawFulfillRandomWords",
     data: BytesLike
@@ -210,6 +239,7 @@ export interface NoLossLotteryInterface extends Interface {
     functionFragment: "vrfCoordinator",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "wethToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "yieldToDistribute",
@@ -242,11 +272,24 @@ export namespace DepositedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace ErrorLogEvent {
-  export type InputTuple = [reason: string];
-  export type OutputTuple = [reason: string];
+export namespace GetValueNowAndTotalDepositsEvent {
+  export type InputTuple = [
+    value_now: BigNumberish,
+    totalDeposits: BigNumberish,
+    liquidityIndex: BigNumberish,
+    scaledBalance: BigNumberish
+  ];
+  export type OutputTuple = [
+    value_now: bigint,
+    totalDeposits: bigint,
+    liquidityIndex: bigint,
+    scaledBalance: bigint
+  ];
   export interface OutputObject {
-    reason: string;
+    value_now: bigint;
+    totalDeposits: bigint;
+    liquidityIndex: bigint;
+    scaledBalance: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -377,7 +420,11 @@ export interface NoLossLottery extends BaseContract {
 
   getATokenBalance: TypedContractMethod<[], [bigint], "view">;
 
+  getScaledBalance: TypedContractMethod<[], [bigint], "view">;
+
   getWrappedTokenGateway: TypedContractMethod<[], [string], "view">;
+
+  getliquidityIndex: TypedContractMethod<[], [bigint], "view">;
 
   keyHash: TypedContractMethod<[], [string], "view">;
 
@@ -390,6 +437,8 @@ export interface NoLossLottery extends BaseContract {
   pickWinner: TypedContractMethod<[], [void], "nonpayable">;
 
   players: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+
+  protocolDataProvider: TypedContractMethod<[], [string], "view">;
 
   rawFulfillRandomWords: TypedContractMethod<
     [requestId: BigNumberish, randomWords: BigNumberish[]],
@@ -416,6 +465,8 @@ export interface NoLossLottery extends BaseContract {
   >;
 
   vrfCoordinator: TypedContractMethod<[], [string], "view">;
+
+  wethToken: TypedContractMethod<[], [string], "view">;
 
   withdraw: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 
@@ -450,8 +501,14 @@ export interface NoLossLottery extends BaseContract {
     nameOrSignature: "getATokenBalance"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "getScaledBalance"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getWrappedTokenGateway"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getliquidityIndex"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "keyHash"
   ): TypedContractMethod<[], [string], "view">;
@@ -470,6 +527,9 @@ export interface NoLossLottery extends BaseContract {
   getFunction(
     nameOrSignature: "players"
   ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "protocolDataProvider"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "rawFulfillRandomWords"
   ): TypedContractMethod<
@@ -496,6 +556,9 @@ export interface NoLossLottery extends BaseContract {
     nameOrSignature: "vrfCoordinator"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "wethToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "withdraw"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
@@ -517,11 +580,11 @@ export interface NoLossLottery extends BaseContract {
     DepositedEvent.OutputObject
   >;
   getEvent(
-    key: "ErrorLog"
+    key: "GetValueNowAndTotalDeposits"
   ): TypedContractEvent<
-    ErrorLogEvent.InputTuple,
-    ErrorLogEvent.OutputTuple,
-    ErrorLogEvent.OutputObject
+    GetValueNowAndTotalDepositsEvent.InputTuple,
+    GetValueNowAndTotalDepositsEvent.OutputTuple,
+    GetValueNowAndTotalDepositsEvent.OutputObject
   >;
   getEvent(
     key: "LotteryWinner"
@@ -582,15 +645,15 @@ export interface NoLossLottery extends BaseContract {
       DepositedEvent.OutputObject
     >;
 
-    "ErrorLog(string)": TypedContractEvent<
-      ErrorLogEvent.InputTuple,
-      ErrorLogEvent.OutputTuple,
-      ErrorLogEvent.OutputObject
+    "GetValueNowAndTotalDeposits(uint256,uint256,uint256,uint256)": TypedContractEvent<
+      GetValueNowAndTotalDepositsEvent.InputTuple,
+      GetValueNowAndTotalDepositsEvent.OutputTuple,
+      GetValueNowAndTotalDepositsEvent.OutputObject
     >;
-    ErrorLog: TypedContractEvent<
-      ErrorLogEvent.InputTuple,
-      ErrorLogEvent.OutputTuple,
-      ErrorLogEvent.OutputObject
+    GetValueNowAndTotalDeposits: TypedContractEvent<
+      GetValueNowAndTotalDepositsEvent.InputTuple,
+      GetValueNowAndTotalDepositsEvent.OutputTuple,
+      GetValueNowAndTotalDepositsEvent.OutputObject
     >;
 
     "LotteryWinner(address,uint256)": TypedContractEvent<

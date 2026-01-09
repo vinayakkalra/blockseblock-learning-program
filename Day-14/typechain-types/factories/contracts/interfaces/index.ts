@@ -4,5 +4,6 @@
 export { IAToken__factory } from "./IAToken__factory";
 export { IERC20__factory } from "./IERC20__factory";
 export { IPool__factory } from "./IPool__factory";
+export { IPoolDataProvider__factory } from "./IPoolDataProvider__factory";
 export { IWETH__factory } from "./IWETH__factory";
 export { IWrappedTokenGatewayV3__factory } from "./IWrappedTokenGatewayV3__factory";

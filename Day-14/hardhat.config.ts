@@ -10,13 +10,22 @@ require('@openzeppelin/hardhat-upgrades');
   To deploy to sepolia use the command npx hardhat ignition deploy ignition/modules/Coffee.ts --network sepolia
 */
 
-const ALCHEMY_API_KEY = "PWcA23WZ3lR0z_tcmyqyb";
+const ALCHEMY_API_KEY = "dAjCVUD_1Fi5xhvPTfzQT";
 const ACCOUNT_1_PRIVATE_KEY = "26a6954def47e05b806ef9be7b2009b3dcbf261939340507312deb4932112414";
 const ACCOUNT_2_PRIVATE_KEY = "ac1a02f099b993f464850b4f6b55ac3203344c07dee78caad293ff77ad934853";
 const ACCOUNT_3_PRIVATE_KEY = "eecdde1382b215dc7717bf52736dec4945b59d949582510142c8bb6eeb143e0f";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+      viaIR: true, // <-- Add this line
+    },
+  },
   networks: {
     sepolia: {
       url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,

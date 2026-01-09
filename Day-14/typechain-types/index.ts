@@ -32,6 +32,8 @@ export type { IERC20 } from "./contracts/interfaces/IERC20";
 export { IERC20__factory } from "./factories/contracts/interfaces/IERC20__factory";
 export type { IPool } from "./contracts/interfaces/IPool";
 export { IPool__factory } from "./factories/contracts/interfaces/IPool__factory";
+export type { IPoolDataProvider } from "./contracts/interfaces/IPoolDataProvider";
+export { IPoolDataProvider__factory } from "./factories/contracts/interfaces/IPoolDataProvider__factory";
 export type { IWETH } from "./contracts/interfaces/IWETH";
 export { IWETH__factory } from "./factories/contracts/interfaces/IWETH__factory";
 export type { IWrappedTokenGatewayV3 } from "./contracts/interfaces/IWrappedTokenGatewayV3";

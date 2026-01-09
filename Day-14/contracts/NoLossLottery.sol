@@ -7,11 +7,14 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 
 import "./interfaces/IERC20.sol";
 import "./interfaces/IWrappedTokenGatewayV3.sol";
+import "./interfaces/IPoolDataProvider.sol";
+import "./interfaces/IAToken.sol";
 
 contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
     IWrappedTokenGatewayV3 immutable wrappedTokenGateway;
-    IERC20 public immutable aToken;
-
+    IAToken public immutable aToken;
+    IERC20 public immutable wethToken;
+    IPoolDataProvider public immutable protocolDataProvider;
     address public admin;
 
     mapping(address => uint256) public deposits;
@@ -38,17 +41,19 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         address wethAtokenAddress,
         address vrfCoordinatorAddress,
         uint256 _subscriptionId,
-        bytes32 _keyHash
+        bytes32 _keyHash,
+        address aaveProtocolDataProviderAddress,
+        address wethAssetAddress
     ) VRFConsumerBaseV2Plus(vrfCoordinatorAddress) {
         admin = msg.sender;
         wrappedTokenGateway = IWrappedTokenGatewayV3(aaveGatewayAddress);
-        aToken = IERC20(wethAtokenAddress);
+        aToken = IAToken(wethAtokenAddress);
         vrfCoordinator = vrfCoordinatorAddress;
         subscriptionId = _subscriptionId;
         keyHash = _keyHash;
+        protocolDataProvider = IPoolDataProvider(aaveProtocolDataProviderAddress);
+        wethToken = IERC20(wethAssetAddress);
     }
-
-    event ErrorLog(string reason);
 
     function deposit() external payable nonReentrant {
         require(msg.value > 0, "Deposit amount must be greater than zero");
@@ -56,26 +61,22 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
             players.push(msg.sender);
         }
         deposits[msg.sender] += msg.value;
-        try
-            wrappedTokenGateway.depositETH{value: msg.value}(
-                address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
-                address(this),
-                0
-            )
-        {
-            emit Deposited(msg.sender, msg.value);
-        } catch Error(string memory reason) {
-            emit ErrorLog(reason);
-            revert(reason);
-        } catch {
-            emit ErrorLog("Unknown error");
-            revert("Unknown error");
-        }
+        wrappedTokenGateway.depositETH{value: msg.value}(
+            address(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951),
+            address(this),
+            0
+        );
+        emit Deposited(msg.sender, msg.value);
+        
     }
 
     function withdraw(uint256 amount) external nonReentrant {
         require(deposits[msg.sender] >= amount, "Insufficient balance");
+        require(aToken.balanceOf(address(this)) >= amount, "Contract lacks sufficient aTokens");
+
         deposits[msg.sender] -= amount;
+
+        aToken.approve(address(wrappedTokenGateway), amount);
 
         // Withdraw from Aave
         wrappedTokenGateway.withdrawETH(
@@ -95,6 +96,17 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         return aToken.balanceOf(address(this));
     }
 
+    function getScaledBalance() public view returns (uint256) {
+        return aToken.scaledBalanceOf(address(this));
+    }
+
+    function getliquidityIndex() public view returns (uint256) {
+        (, , , , , uint256 liquidityIndex, , , , , ,) = protocolDataProvider.getReserveData(address(wethToken));
+        return liquidityIndex;
+    }
+
+    event GetValueNowAndTotalDeposits(uint256 value_now, uint256 totalDeposits, uint256 liquidityIndex, uint256 scaledBalance);
+
     // Request randomness from Chainlink VRF to pick a winner
     function pickWinner() external onlyOwner nonReentrant {
         require(players.length > 0, "No players in the lottery");
@@ -105,9 +117,17 @@ contract NoLossLottery is ReentrancyGuard, VRFConsumerBaseV2Plus {
         for (uint256 i = 0; i < players.length; i++) {
             totalDeposits += deposits[players[i]];
         }
-        uint256 contractBalance = aToken.balanceOf(address(this));
-        require(contractBalance > totalDeposits, "No yield to distribute");
-        yieldToDistribute = contractBalance - totalDeposits;
+
+        uint256 liquidityIndex = getliquidityIndex();
+
+        uint256 scaledBalance = getScaledBalance();
+
+        uint256 value_now = (scaledBalance * liquidityIndex)/ (10**27);
+
+        emit GetValueNowAndTotalDeposits(value_now, totalDeposits, liquidityIndex, scaledBalance);
+
+        require(value_now > totalDeposits, "No yield to distribute");
+        yieldToDistribute = value_now - totalDeposits;
 
         lotteryActive = true;
         lastRequestId = s_vrfCoordinator.requestRandomWords(

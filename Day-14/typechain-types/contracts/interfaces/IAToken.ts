@@ -3,10 +3,12 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -25,8 +27,12 @@ export interface IATokenInterface extends Interface {
       | "POOL"
       | "RESERVE_TREASURY_ADDRESS"
       | "UNDERLYING_ASSET_ADDRESS"
+      | "approve"
+      | "balanceOf"
       | "getIncentivesController"
+      | "scaledBalanceOf"
       | "scaledTotalSupply"
+      | "transferFrom"
   ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "POOL", values?: undefined): string;
@@ -39,12 +45,28 @@ export interface IATokenInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "approve",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getIncentivesController",
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "scaledBalanceOf",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "scaledTotalSupply",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferFrom",
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "POOL", data: BytesLike): Result;
@@ -56,12 +78,22 @@ export interface IATokenInterface extends Interface {
     functionFragment: "UNDERLYING_ASSET_ADDRESS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getIncentivesController",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "scaledBalanceOf",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "scaledTotalSupply",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferFrom",
     data: BytesLike
   ): Result;
 }
@@ -115,9 +147,25 @@ export interface IAToken extends BaseContract {
 
   UNDERLYING_ASSET_ADDRESS: TypedContractMethod<[], [string], "view">;
 
+  approve: TypedContractMethod<
+    [spender: AddressLike, amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
+
+  balanceOf: TypedContractMethod<[user: AddressLike], [bigint], "view">;
+
   getIncentivesController: TypedContractMethod<[], [string], "view">;
 
+  scaledBalanceOf: TypedContractMethod<[user: AddressLike], [bigint], "view">;
+
   scaledTotalSupply: TypedContractMethod<[], [bigint], "view">;
+
+  transferFrom: TypedContractMethod<
+    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -133,11 +181,31 @@ export interface IAToken extends BaseContract {
     nameOrSignature: "UNDERLYING_ASSET_ADDRESS"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "approve"
+  ): TypedContractMethod<
+    [spender: AddressLike, amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "balanceOf"
+  ): TypedContractMethod<[user: AddressLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "getIncentivesController"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "scaledBalanceOf"
+  ): TypedContractMethod<[user: AddressLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "scaledTotalSupply"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "transferFrom"
+  ): TypedContractMethod<
+    [from: AddressLike, to: AddressLike, amount: BigNumberish],
+    [boolean],
+    "nonpayable"
+  >;
 
   filters: {};
 }

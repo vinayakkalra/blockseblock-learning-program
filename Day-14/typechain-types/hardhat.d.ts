@@ -62,6 +62,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IPool__factory>;
     getContractFactory(
+      name: "IPoolDataProvider",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPoolDataProvider__factory>;
+    getContractFactory(
       name: "IWETH",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IWETH__factory>;
@@ -139,6 +143,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IPool>;
     getContractAt(
+      name: "IPoolDataProvider",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPoolDataProvider>;
+    getContractAt(
       name: "IWETH",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -208,6 +217,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPool>;
     deployContract(
+      name: "IPoolDataProvider",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPoolDataProvider>;
+    deployContract(
       name: "IWETH",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IWETH>;
@@ -284,6 +297,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPool>;
+    deployContract(
+      name: "IPoolDataProvider",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPoolDataProvider>;
     deployContract(
       name: "IWETH",
       args: any[],
